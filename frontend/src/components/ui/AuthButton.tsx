@@ -1,14 +1,12 @@
-"use client";
-
 import { LucideIcon } from "lucide-react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 
 interface AuthButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
   icon?: LucideIcon;
   children: React.ReactNode;
   className?: string;
-  href?: string;
+  to?: string;
 }
 
 export default function AuthButton({ 
@@ -17,7 +15,7 @@ export default function AuthButton({
   children, 
   className = "", 
   disabled,
-  href,
+  to,
   ...props 
 }: AuthButtonProps) {
   const commonStyles = `w-full h-12 flex items-center justify-center gap-2 rounded-xl font-bold text-black shadow-lg transition-all active:scale-[0.98] ${
@@ -37,9 +35,9 @@ export default function AuthButton({
     </>
   );
 
-  if (href) {
+  if (to) {
     return (
-      <Link href={href} className={commonStyles}>
+      <Link to={to} className={commonStyles}>
         {content}
       </Link>
     );
