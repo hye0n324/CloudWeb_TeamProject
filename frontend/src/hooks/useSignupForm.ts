@@ -195,7 +195,7 @@ export const useSignupForm = () => {
 
     if (!isRequired(formData.username)) newErrors.username = "아이디를 입력해 주세요.";
     if (!validateEmail(formData.email)) newErrors.email = "올바른 이메일 형식이 아닙니다.";
-    if (!isEmailVerified) newErrors.email = "이메일 인증을 완료해 주세요.";
+    // if (!isEmailVerified) newErrors.email = "이메일 인증을 완료해 주세요."; (백엔드 미지원으로 임시 제거)
     if (!validatePassword(formData.password)) newErrors.password = "영문, 숫자, 특수문자 포함 8자 이상 입력해 주세요.";
     if (!validateConfirmPassword(formData.password, formData.confirmPassword)) newErrors.confirmPassword = "비밀번호가 일치하지 않습니다.";
     if (!validatePhone(formData.phone)) newErrors.phone = "올바른 전화번호 형식이 아닙니다.";
@@ -209,12 +209,12 @@ export const useSignupForm = () => {
     e.preventDefault();
     if (!validate()) return;
 
-    const signupToken = sessionStorage.getItem("signupToken");
-
-    if (!signupToken) {
-      alert("인증 토큰이 누락되었습니다. 다시 이메일 인증을 진행해 주세요.");
-      return;
-    }
+    // 백엔드 미지원으로 임시 우회
+    // const signupToken = sessionStorage.getItem("signupToken");
+    // if (!signupToken) {
+    //   alert("인증 토큰이 누락되었습니다. 다시 이메일 인증을 진행해 주세요.");
+    //   return;
+    // }
 
     setIsLoading(true);
     const result = await signup({
@@ -222,7 +222,7 @@ export const useSignupForm = () => {
       email: formData.email,
       password: formData.password,
       name: formData.ownerName,
-    }, signupToken);
+    }, "temporary-bypass-token");
 
     if (result.ok) {
       alert("회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.");

@@ -31,16 +31,7 @@ export default function Signup() {
               onChange={form.handleChange}
               error={form.errors.username}
               success={form.success.username}
-            >
-              <button
-                type="button"
-                onClick={actions.checkIdDuplicate}
-                disabled={status.isIdChecking}
-                className="px-4 py-2.5 bg-neon-500/10 text-neon-500 border border-neon-500/30 rounded-xl text-sm font-bold hover:bg-neon-500/20 transition-colors whitespace-nowrap disabled:opacity-50"
-              >
-                {status.isIdChecking ? "확인 중..." : "중복확인"}
-              </button>
-            </AuthInput>
+            />
 
             <AuthInput
               label="이메일"
@@ -53,48 +44,7 @@ export default function Signup() {
               onChange={form.handleChange}
               error={form.errors.email}
               success={form.success.email}
-              readOnly={emailAuth.isSent || emailAuth.isVerified}
-            >
-              {!emailAuth.isVerified ? (
-                <button
-                  type="button"
-                  onClick={emailAuth.send}
-                  disabled={status.isEmailSending}
-                  className="px-4 py-2.5 bg-neon-500/10 text-neon-500 border border-neon-500/30 rounded-xl text-sm font-bold hover:bg-neon-500/20 transition-colors whitespace-nowrap disabled:opacity-50"
-                >
-                  {status.isEmailSending ? "발송 중..." : emailAuth.isSent ? "재발송" : "인증 요청"}
-                </button>
-              ) : (
-                <div className="flex items-center gap-1.5 px-3 py-2 bg-green-500/10 text-green-400 border border-green-500/30 rounded-xl text-xs font-bold">
-                  <CheckCircle2 size={14} /> 인증됨
-                </div>
-              )}
-            </AuthInput>
-
-            {emailAuth.isSent && !emailAuth.isVerified && (
-              <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                <AuthInput
-                  label="인증번호"
-                  icon={ShieldCheck}
-                  name="verificationCode"
-                  type="text"
-                  maxLength={6}
-                  placeholder="인증번호 6자리"
-                  value={emailAuth.code}
-                  onChange={(e) => emailAuth.setCode(e.target.value)}
-                  error={form.errors.verificationCode}
-                >
-                  <button
-                    type="button"
-                    onClick={emailAuth.confirm}
-                    disabled={status.isCodeVerifying}
-                    className="px-4 py-2.5 bg-zinc-800 text-white rounded-xl text-sm font-bold hover:bg-zinc-700 border border-zinc-700 transition-colors whitespace-nowrap disabled:opacity-50"
-                  >
-                    {status.isCodeVerifying ? "확인 중..." : "번호 확인"}
-                  </button>
-                </AuthInput>
-              </div>
-            )}
+            />
 
             <AuthInput
               label="휴대폰 번호"

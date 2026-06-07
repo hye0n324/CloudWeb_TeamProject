@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Dumbbell, ClipboardList, UserPlus } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Navbar() {
+  const { isLoggedIn, user, logout } = useAuth();
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-zinc-800 bg-black/80 backdrop-blur-md">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -44,10 +46,26 @@ export default function Navbar() {
           </div>
         </div>
         <div className="flex items-center gap-4 text-sm font-medium">
-          <Link to="/login" className="text-zinc-300 hover:text-white transition-colors">로그인</Link>
-          <Link to="/signup" className="px-4 py-2 rounded-md bg-neon-400 text-black hover:bg-neon-500 transition-colors font-semibold">
-            시작하기
-          </Link>
+          {isLoggedIn ? (
+            <>
+              <span className="text-zinc-300 font-bold hidden sm:inline-block">
+                <span className="text-neon-400">{user?.ownerName || user?.username}</span>님 환영합니다!
+              </span>
+              <button 
+                onClick={logout}
+                className="px-4 py-2 rounded-md bg-neon-400 text-black hover:bg-neon-500 transition-colors font-semibold"
+              >
+                <span className="hidden sm:inline-block">로그아웃</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="text-zinc-300 hover:text-white transition-colors">로그인</Link>
+              <Link to="/signup" className="px-4 py-2 rounded-md bg-neon-400 text-black hover:bg-neon-500 transition-colors font-semibold">
+                시작하기
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>
