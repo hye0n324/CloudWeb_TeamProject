@@ -10,6 +10,14 @@ import RoutinePage from '@/pages/RoutinePage';
 import PlaceholderPage from '@/pages/Placeholder';
 import { RoutineProvider } from '@/context/RoutineContext';
 
+import CommunityHome from '@/pages/community/CommunityHome';
+import RoutineList from '@/pages/community/RoutineList';
+import RoutineDetail from '@/pages/community/RoutineDetail';
+import RoutineForm from '@/pages/community/RoutineForm';
+import MateList from '@/pages/community/MateList';
+import MateDetail from '@/pages/community/MateDetail';
+import MateForm from '@/pages/community/MateForm';
+
 function App() {
   return (
     <RoutineProvider>
@@ -25,9 +33,15 @@ function App() {
               <Route path="/meal/add" element={<AddMeal />} />
               <Route path="/exercise/recommend" element={<RecommendationPage />} />
               <Route path="/exercise/routines" element={<RoutinePage />} />
-              <Route path="/community" element={<PlaceholderPage title="커뮤니티" />} />
-              <Route path="/community/routines" element={<PlaceholderPage title="루틴 공유" />} />
-              <Route path="/community/mates" element={<PlaceholderPage title="운동 메이트" />} />
+              
+              {/* 커뮤니티 라우트 */}
+              <Route path="/community" element={<CommunityHome />} />
+              <Route path="/community/routines" element={<RoutineList />} />
+              <Route path="/community/routines/new" element={<RoutineForm />} />
+              <Route path="/community/routines/:id" element={<RoutineDetail />} />
+              <Route path="/community/mates" element={<MateList />} />
+              <Route path="/community/mates/new" element={<MateForm />} />
+              <Route path="/community/mates/:id" element={<MateDetail />} />
             </Routes>
           </main>
         </div>
