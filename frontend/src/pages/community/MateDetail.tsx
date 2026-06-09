@@ -1,13 +1,54 @@
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { User, Calendar, MapPin, Clock, ChevronLeft, Users } from 'lucide-react';
+import { User, Calendar, MapPin, Clock, ChevronLeft } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
-import { DUMMY_MATES } from '@/lib/dummy-community';
 import AuthButton from '@/components/ui/AuthButton';
+import { MatePost } from '@/types/community';
+import { getMate, deleteMate, toggleMateApply, formatDate } from '@/lib/communityApi';
 
 export default function MateDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const mate = DUMMY_MATES.find((m) => m.id === id);
+  const [mate, setMate] = useState<MatePost | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [applyLoading, setApplyLoading] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    getMate(Number(id))
+      .then(setMate)
+      .catch(() => setMate(null))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const handleApply = async () => {
+    if (!mate || applyLoading) return;
+    setApplyLoading(true);
+    try {
+      const result = await toggleMateApply(mate.id);
+      setMate(prev => prev ? { ...prev, appliedByMe: result.applied, currentMembers: result.currentMembers } : prev);
+      alert('참여 신청이 완료되었습니다!');
+    } catch (e: any) {
+      alert(e?.response?.data?.message || '신청에 실패했습니다.');
+    } finally {
+      setApplyLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!mate) return;
+    if (!window.confirm('정말 이 모집글을 삭제하시겠습니까?')) return;
+    try {
+      await deleteMate(mate.id);
+      navigate('/community/mates');
+    } catch {
+      alert('삭제에 실패했습니다.');
+    }
+  };
+
+  if (loading) {
+    return <div className="container mx-auto px-4 py-20 text-center"><p className="text-zinc-500">불러오는 중...</p></div>;
+  }
 
   if (!mate) {
     return (
@@ -24,17 +65,16 @@ export default function MateDetail() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader 
+      <PageHeader
         title={mate.title}
         breadcrumbs={[
           { label: '커뮤니티', href: '/community' },
           { label: '운동 메이트', href: '/community/mates' },
-          { label: '상세 보기' }
+          { label: '상세 보기' },
         ]}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 shadow-xl">
             <div className="flex flex-wrap items-center gap-6 mb-8 pb-8 border-b border-zinc-800">
@@ -44,36 +84,32 @@ export default function MateDetail() {
               </div>
               <div className="flex items-center gap-2 text-zinc-400">
                 <Calendar size={18} />
-                <span>등록일: {mate.createdAt}</span>
+                <span>등록일: {formatDate(mate.createdAt)}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className={`px-2.5 py-1 rounded-md text-xs font-bold border ${
-                  isOpen 
-                    ? 'bg-neon-500/10 text-neon-400 border-neon-500/20' 
-                    : 'bg-zinc-800 text-zinc-500 border-zinc-700'
-                }`}>
-                  {isOpen ? '모집 중' : '모집 완료'}
-                </span>
-              </div>
+              <span className={`px-2.5 py-1 rounded-md text-xs font-bold border ${
+                isOpen
+                  ? 'bg-neon-500/10 text-neon-400 border-neon-500/20'
+                  : 'bg-zinc-800 text-zinc-500 border-zinc-700'
+              }`}>
+                {isOpen ? '모집 중' : '모집 완료'}
+              </span>
             </div>
 
             <div className="prose prose-invert max-w-none mb-12">
-              <p className="text-zinc-300 leading-relaxed whitespace-pre-wrap text-lg">
-                {mate.content}
-              </p>
+              <p className="text-zinc-300 leading-relaxed whitespace-pre-wrap text-lg">{mate.content}</p>
             </div>
 
-            <AuthButton 
-              disabled={!isOpen}
-              onClick={() => alert('참여 신청이 완료되었습니다!')}
+            <AuthButton
+              disabled={!isOpen || applyLoading}
+              onClick={handleApply}
               className="sm:w-auto px-10"
             >
-              {isOpen ? '참여 신청하기' : '모집이 완료되었습니다'}
+              {applyLoading ? '처리 중...' : isOpen ? '참여 신청하기' : '모집이 완료되었습니다'}
             </AuthButton>
           </div>
-          
+
           <div className="flex flex-wrap gap-4 mt-8">
-            <AuthButton 
+            <AuthButton
               onClick={() => navigate('/community/mates')}
               className="w-auto px-8 bg-zinc-800 text-white hover:bg-zinc-700 shadow-none"
               icon={ChevronLeft}
@@ -81,19 +117,14 @@ export default function MateDetail() {
               목록으로
             </AuthButton>
             <div className="flex gap-4 ml-auto">
-              <AuthButton 
+              <AuthButton
                 onClick={() => alert('수정 페이지로 이동합니다. (기능 준비 중)')}
                 className="w-auto px-6 bg-zinc-800 text-white hover:bg-zinc-700 shadow-none border border-zinc-700"
               >
                 수정
               </AuthButton>
-              <AuthButton 
-                onClick={() => {
-                  if (window.confirm('정말 이 모집글을 삭제하시겠습니까?')) {
-                    alert('모집글이 삭제되었습니다.');
-                    navigate('/community/mates');
-                  }
-                }}
+              <AuthButton
+                onClick={handleDelete}
                 className="w-auto px-6 bg-red-500/10 text-red-500 hover:bg-red-500/20 shadow-none border border-red-500/20"
               >
                 삭제
@@ -102,7 +133,6 @@ export default function MateDetail() {
           </div>
         </div>
 
-        {/* Sidebar Info */}
         <div className="space-y-6">
           <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6">
             <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
@@ -126,7 +156,7 @@ export default function MateDetail() {
               </div>
               <div className="flex items-start justify-between py-2">
                 <div className="flex items-center gap-2 text-zinc-500">
-                  <Users size={16} />
+                  <User size={16} />
                   <span>작성자</span>
                 </div>
                 <span className="text-white font-medium">{mate.author}</span>
