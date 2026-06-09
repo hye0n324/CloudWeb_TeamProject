@@ -5,37 +5,45 @@ import PageHeader from '@/components/ui/PageHeader';
 import AuthInput from '@/components/ui/AuthInput';
 import AuthButton from '@/components/ui/AuthButton';
 import { BodyPart } from '@/types/community';
+import { createRoutine } from '@/lib/communityApi';
 
 export default function RoutineForm() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
     bodyPart: '전신' as BodyPart,
-    content: ''
+    content: '',
   });
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock 제출 로직
-    console.log('Submitting Routine:', formData);
-    alert('루틴이 성공적으로 등록되었습니다!');
-    navigate('/community/routines');
+    setLoading(true);
+    try {
+      await createRoutine(formData);
+      alert('루틴이 성공적으로 등록되었습니다!');
+      navigate('/community/routines');
+    } catch {
+      alert('등록에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader 
+      <PageHeader
         title="새 루틴 등록"
         breadcrumbs={[
           { label: '커뮤니티', href: '/community' },
           { label: '루틴 공유', href: '/community/routines' },
-          { label: '루틴 작성' }
+          { label: '루틴 작성' },
         ]}
       />
 
       <div className="max-w-3xl mx-auto">
         <form onSubmit={handleSubmit} className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 space-y-6 shadow-xl">
-          <AuthInput 
+          <AuthInput
             label="루틴 제목"
             icon={Type}
             placeholder="예: 초보자를 위한 상체 집중 루틴"
@@ -76,7 +84,7 @@ export default function RoutineForm() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
-            <AuthButton 
+            <AuthButton
               type="button"
               onClick={() => navigate('/community/routines')}
               className="bg-zinc-800 text-white hover:bg-zinc-700 shadow-none"
@@ -84,11 +92,8 @@ export default function RoutineForm() {
             >
               취소
             </AuthButton>
-            <AuthButton 
-              type="submit"
-              icon={Send}
-            >
-              등록하기
+            <AuthButton type="submit" icon={Send} disabled={loading}>
+              {loading ? '등록 중...' : '등록하기'}
             </AuthButton>
           </div>
         </form>

@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { Dumbbell, Shirt, PersonStanding, Focus, AlignJustify, MoveHorizontal, Activity } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Activity, Shirt, PersonStanding, Focus, AlignJustify, MoveHorizontal } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import PostCard from '@/components/ui/PostCard';
 import FilterBar from '@/components/ui/FilterBar';
-import { DUMMY_ROUTINES } from '@/lib/dummy-community';
-import { BodyPart } from '@/types/community';
+import { BodyPart, RoutinePost } from '@/types/community';
+import { getRoutines, formatDate } from '@/lib/communityApi';
 
 const BODY_PART_ICONS: Record<BodyPart, any> = {
   '전신': Activity,
@@ -24,52 +24,62 @@ const BODY_PART_COLORS: Record<BodyPart, string> = {
   '어깨': 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
 };
 
+const filterOptions = [
+  { label: '전체', value: 'ALL' },
+  { label: '전신', value: '전신' },
+  { label: '상체', value: '상체' },
+  { label: '하체', value: '하체' },
+  { label: '가슴', value: '가슴' },
+  { label: '등', value: '등' },
+  { label: '어깨', value: '어깨' },
+];
+
 export default function RoutineList() {
   const [selectedPart, setSelectedPart] = useState('ALL');
+  const [routines, setRoutines] = useState<RoutinePost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filterOptions = [
-    { label: '전체', value: 'ALL' },
-    { label: '전신', value: '전신' },
-    { label: '상체', value: '상체' },
-    { label: '하체', value: '하체' },
-    { label: '가슴', value: '가슴' },
-    { label: '등', value: '등' },
-    { label: '어깨', value: '어깨' },
-  ];
-
-  const filteredRoutines = selectedPart === 'ALL' 
-    ? DUMMY_ROUTINES 
-    : DUMMY_ROUTINES.filter(r => r.bodyPart === selectedPart);
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    const tag = selectedPart !== 'ALL' ? (selectedPart as BodyPart) : undefined;
+    getRoutines(tag)
+      .then(setRoutines)
+      .catch(() => setError('루틴 목록을 불러오는데 실패했습니다.'))
+      .finally(() => setLoading(false));
+  }, [selectedPart]);
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader 
+      <PageHeader
         title="루틴 공유"
         breadcrumbs={[
           { label: '커뮤니티', href: '/community' },
-          { label: '루틴 공유' }
+          { label: '루틴 공유' },
         ]}
-        action={{
-          label: '루틴 등록',
-          href: '/community/routines/new'
-        }}
+        action={{ label: '루틴 등록', href: '/community/routines/new' }}
       />
 
-      <FilterBar 
-        options={filterOptions}
-        selectedValue={selectedPart}
-        onSelect={setSelectedPart}
-      />
+      <FilterBar options={filterOptions} selectedValue={selectedPart} onSelect={setSelectedPart} />
 
-      {filteredRoutines.length > 0 ? (
+      {loading ? (
+        <div className="py-20 text-center">
+          <p className="text-zinc-500">불러오는 중...</p>
+        </div>
+      ) : error ? (
+        <div className="py-20 text-center">
+          <p className="text-red-400">{error}</p>
+        </div>
+      ) : routines.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredRoutines.map((routine) => (
+          {routines.map((routine) => (
             <PostCard
               key={routine.id}
-              id={routine.id}
+              id={String(routine.id)}
               title={routine.title}
               author={routine.author}
-              date={routine.createdAt}
+              date={formatDate(routine.createdAt)}
               tag={routine.bodyPart}
               tagIcon={BODY_PART_ICONS[routine.bodyPart]}
               tagColor={BODY_PART_COLORS[routine.bodyPart]}

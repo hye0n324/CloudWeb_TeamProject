@@ -4,6 +4,7 @@ import { Type, MapPin, Calendar, AlignLeft, Send, X } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import AuthInput from '@/components/ui/AuthInput';
 import AuthButton from '@/components/ui/AuthButton';
+import { createMate } from '@/lib/communityApi';
 
 export default function MateForm() {
   const navigate = useNavigate();
@@ -11,31 +12,38 @@ export default function MateForm() {
     title: '',
     location: '',
     date: '',
-    content: ''
+    content: '',
   });
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock 제출 로직
-    console.log('Submitting Mate Post:', formData);
-    alert('모집글이 성공적으로 등록되었습니다!');
-    navigate('/community/mates');
+    setLoading(true);
+    try {
+      await createMate(formData);
+      alert('모집글이 성공적으로 등록되었습니다!');
+      navigate('/community/mates');
+    } catch {
+      alert('등록에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader 
+      <PageHeader
         title="운동 메이트 모집하기"
         breadcrumbs={[
           { label: '커뮤니티', href: '/community' },
           { label: '운동 메이트', href: '/community/mates' },
-          { label: '모집 작성' }
+          { label: '모집 작성' },
         ]}
       />
 
       <div className="max-w-3xl mx-auto">
         <form onSubmit={handleSubmit} className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 space-y-6 shadow-xl">
-          <AuthInput 
+          <AuthInput
             label="모집 제목"
             icon={Type}
             placeholder="예: 오늘 저녁 강남역 헬스장 같이 가실 분!"
@@ -45,7 +53,7 @@ export default function MateForm() {
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <AuthInput 
+            <AuthInput
               label="장소"
               icon={MapPin}
               placeholder="예: 서울시 강남구"
@@ -53,7 +61,7 @@ export default function MateForm() {
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               required
             />
-            <AuthInput 
+            <AuthInput
               label="운동 날짜"
               icon={Calendar}
               type="date"
@@ -77,7 +85,7 @@ export default function MateForm() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
-            <AuthButton 
+            <AuthButton
               type="button"
               onClick={() => navigate('/community/mates')}
               className="bg-zinc-800 text-white hover:bg-zinc-700 shadow-none"
@@ -85,11 +93,8 @@ export default function MateForm() {
             >
               취소
             </AuthButton>
-            <AuthButton 
-              type="submit"
-              icon={Send}
-            >
-              모집 시작하기
+            <AuthButton type="submit" icon={Send} disabled={loading}>
+              {loading ? '등록 중...' : '모집 시작하기'}
             </AuthButton>
           </div>
         </form>

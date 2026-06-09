@@ -1,9 +1,10 @@
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { User, Calendar, Tag, Clock, ChevronLeft, Activity, Shirt, PersonStanding, Focus, AlignJustify, MoveHorizontal } from 'lucide-react';
+import { User, Calendar, Clock, ChevronLeft, Activity, Shirt, PersonStanding, Focus, AlignJustify, MoveHorizontal } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
-import { DUMMY_ROUTINES } from '@/lib/dummy-community';
 import AuthButton from '@/components/ui/AuthButton';
-import { BodyPart } from '@/types/community';
+import { BodyPart, RoutinePost } from '@/types/community';
+import { getRoutine, deleteRoutine, formatDate } from '@/lib/communityApi';
 
 const BODY_PART_ICONS: Record<BodyPart, any> = {
   '전신': Activity,
@@ -26,7 +27,31 @@ const BODY_PART_COLORS: Record<BodyPart, string> = {
 export default function RoutineDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const routine = DUMMY_ROUTINES.find((r) => r.id === id);
+  const [routine, setRoutine] = useState<RoutinePost | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id) return;
+    getRoutine(Number(id))
+      .then(setRoutine)
+      .catch(() => setRoutine(null))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const handleDelete = async () => {
+    if (!routine) return;
+    if (!window.confirm('정말 이 루틴을 삭제하시겠습니까?')) return;
+    try {
+      await deleteRoutine(routine.id);
+      navigate('/community/routines');
+    } catch {
+      alert('삭제에 실패했습니다.');
+    }
+  };
+
+  if (loading) {
+    return <div className="container mx-auto px-4 py-20 text-center"><p className="text-zinc-500">불러오는 중...</p></div>;
+  }
 
   if (!routine) {
     return (
@@ -44,17 +69,16 @@ export default function RoutineDetail() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader 
+      <PageHeader
         title={routine.title}
         breadcrumbs={[
           { label: '커뮤니티', href: '/community' },
           { label: '루틴 공유', href: '/community/routines' },
-          { label: '상세 보기' }
+          { label: '상세 보기' },
         ]}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 shadow-xl">
             <div className="flex flex-wrap items-center gap-6 mb-8 pb-8 border-b border-zinc-800">
@@ -64,7 +88,7 @@ export default function RoutineDetail() {
               </div>
               <div className="flex items-center gap-2 text-zinc-400">
                 <Calendar size={18} />
-                <span>{routine.createdAt}</span>
+                <span>{formatDate(routine.createdAt)}</span>
               </div>
               <div className="flex items-center gap-2 text-zinc-400">
                 <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-sm border ${colorClass}`}>
@@ -75,14 +99,12 @@ export default function RoutineDetail() {
             </div>
 
             <div className="prose prose-invert max-w-none">
-              <p className="text-zinc-300 leading-relaxed whitespace-pre-wrap text-lg">
-                {routine.content}
-              </p>
+              <p className="text-zinc-300 leading-relaxed whitespace-pre-wrap text-lg">{routine.content}</p>
             </div>
           </div>
-          
+
           <div className="flex flex-wrap gap-4">
-            <AuthButton 
+            <AuthButton
               onClick={() => navigate('/community/routines')}
               className="w-auto px-8 bg-zinc-800 text-white hover:bg-zinc-700 shadow-none"
               icon={ChevronLeft}
@@ -90,19 +112,14 @@ export default function RoutineDetail() {
               목록으로
             </AuthButton>
             <div className="flex gap-4 ml-auto">
-              <AuthButton 
+              <AuthButton
                 onClick={() => alert('수정 페이지로 이동합니다. (기능 준비 중)')}
                 className="w-auto px-6 bg-zinc-800 text-white hover:bg-zinc-700 shadow-none border border-zinc-700"
               >
                 수정
               </AuthButton>
-              <AuthButton 
-                onClick={() => {
-                  if (window.confirm('정말 이 루틴을 삭제하시겠습니까?')) {
-                    alert('루틴이 삭제되었습니다.');
-                    navigate('/community/routines');
-                  }
-                }}
+              <AuthButton
+                onClick={handleDelete}
                 className="w-auto px-6 bg-red-500/10 text-red-500 hover:bg-red-500/20 shadow-none border border-red-500/20"
               >
                 삭제
@@ -111,7 +128,6 @@ export default function RoutineDetail() {
           </div>
         </div>
 
-        {/* Sidebar Info */}
         <div className="space-y-6">
           <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6">
             <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
@@ -129,7 +145,7 @@ export default function RoutineDetail() {
               </div>
               <div className="flex justify-between py-2">
                 <span className="text-zinc-500">등록일</span>
-                <span className="text-white font-medium">{routine.createdAt}</span>
+                <span className="text-white font-medium">{formatDate(routine.createdAt)}</span>
               </div>
             </div>
           </div>
