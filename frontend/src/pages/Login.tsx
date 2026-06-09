@@ -1,12 +1,29 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, Lock, ArrowRight, AlertCircle } from "lucide-react";
 
 import AuthInput from "@/components/ui/AuthInput";
 import AuthButton from "@/components/ui/AuthButton";
-import { useLoginForm } from "@/hooks/useLoginForm";
 
 export default function Login() {
-  const { form, status } = useLoginForm();
+  const [formData, setFormData] = useState({ username: "", password: "" });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+    // TODO: Implement actual login logic
+    setTimeout(() => {
+      setIsLoading(false);
+      setError("아이디 또는 비밀번호가 일치하지 않습니다.");
+    }, 1000);
+  };
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4">
@@ -15,23 +32,23 @@ export default function Login() {
           <h2 className="text-3xl font-extrabold text-white tracking-tight">로그인</h2>
           <p className="mt-2 text-sm text-zinc-400 font-medium">피트니스 관리 프로그램에 오신 것을 환영합니다.</p>
 
-          {form.error && (
+          {error && (
             <div className="mt-4 p-3 bg-red-500/10 border border-red-500/50 rounded-xl flex items-center gap-2 text-red-400 text-sm font-medium animate-in fade-in slide-in-from-top-2">
               <AlertCircle size={16} />
-              {form.error}
+              {error}
             </div>
           )}
         </div>
 
-        <form className="space-y-5" onSubmit={form.handleSubmit}>
+        <form className="space-y-5" onSubmit={handleSubmit}>
           <AuthInput
             label="로그인 아이디"
             icon={Mail}
             name="username"
             type="text"
             placeholder="아이디를 입력하세요"
-            value={form.data.username}
-            onChange={form.handleChange}
+            value={formData.username}
+            onChange={handleChange}
             required
           />
           <div className="space-y-2">
@@ -41,8 +58,8 @@ export default function Login() {
               name="password"
               type="password"
               placeholder="비밀번호를 입력하세요"
-              value={form.data.password}
-              onChange={form.handleChange}
+              value={formData.password}
+              onChange={handleChange}
               required
             />
             <div className="flex justify-center items-center gap-3 mt-4 font-medium">
@@ -63,7 +80,7 @@ export default function Login() {
           </div>
 
           <div className="pt-2">
-            <AuthButton type="submit" isLoading={status.isLoading} icon={ArrowRight}>
+            <AuthButton type="submit" isLoading={isLoading} icon={ArrowRight}>
               로그인하기
             </AuthButton>
           </div>

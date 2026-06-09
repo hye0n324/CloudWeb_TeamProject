@@ -9,12 +9,10 @@ import RecommendationPage from '@/pages/RecommendationPage';
 import RoutinePage from '@/pages/RoutinePage';
 import PlaceholderPage from '@/pages/Placeholder';
 import { RoutineProvider } from '@/context/RoutineContext';
-import { AuthProvider } from '@/context/AuthContext';
 
 function App() {
   return (
-    <AuthProvider>
-      <RoutineProvider>
+    <RoutineProvider>
       <Router>
         <div className="min-h-screen flex flex-col bg-background text-foreground">
           <Navbar />
@@ -35,7 +33,6 @@ function App() {
         </div>
       </Router>
     </RoutineProvider>
-    </AuthProvider>
   );
 }
 

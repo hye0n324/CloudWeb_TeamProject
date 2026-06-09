@@ -1,12 +1,61 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { User, Mail, Phone, Lock, UserCircle, ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
 
 import AuthInput from "@/components/ui/AuthInput";
 import AuthButton from "@/components/ui/AuthButton";
-import { useSignupForm } from "@/hooks/useSignupForm";
 
 export default function Signup() {
-  const { form, emailAuth, status, actions } = useSignupForm();
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    verificationCode: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+    ownerName: ""
+  });
+  const [status, setStatus] = useState({
+    isIdChecking: false,
+    isEmailSending: false,
+    isCodeVerifying: false,
+    isLoading: false
+  });
+  const [emailAuth, setEmailAuth] = useState({
+    isSent: false,
+    isVerified: false
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleCheckId = () => {
+    setStatus({ ...status, isIdChecking: true });
+    setTimeout(() => setStatus({ ...status, isIdChecking: false }), 1000);
+  };
+
+  const handleSendEmail = () => {
+    setStatus({ ...status, isEmailSending: true });
+    setTimeout(() => {
+      setStatus({ ...status, isEmailSending: false });
+      setEmailAuth({ ...emailAuth, isSent: true });
+    }, 1000);
+  };
+
+  const handleVerifyCode = () => {
+    setStatus({ ...status, isCodeVerifying: true });
+    setTimeout(() => {
+      setStatus({ ...status, isCodeVerifying: false });
+      setEmailAuth({ ...emailAuth, isVerified: true });
+    }, 1000);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus({ ...status, isLoading: true });
+    setTimeout(() => setStatus({ ...status, isLoading: false }), 1500);
+  };
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4">
@@ -18,7 +67,7 @@ export default function Signup() {
           </p>
         </div>
 
-        <form className="space-y-6" onSubmit={form.handleSubmit}>
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <AuthInput
               label="아이디"
@@ -27,11 +76,18 @@ export default function Signup() {
               type="text"
               required
               placeholder="아이디 입력"
-              value={form.data.username}
-              onChange={form.handleChange}
-              error={form.errors.username}
-              success={form.success.username}
-            />
+              value={formData.username}
+              onChange={handleChange}
+            >
+              <button
+                type="button"
+                onClick={handleCheckId}
+                disabled={status.isIdChecking}
+                className="px-4 py-2.5 bg-neon-500/10 text-neon-500 border border-neon-500/30 rounded-xl text-sm font-bold hover:bg-neon-500/20 transition-colors whitespace-nowrap disabled:opacity-50"
+              >
+                {status.isIdChecking ? "확인 중..." : "중복확인"}
+              </button>
+            </AuthInput>
 
             <AuthInput
               label="이메일"
@@ -40,11 +96,49 @@ export default function Signup() {
               type="email"
               required
               placeholder="example@mail.com"
-              value={form.data.email}
-              onChange={form.handleChange}
-              error={form.errors.email}
-              success={form.success.email}
-            />
+              value={formData.email}
+              onChange={handleChange}
+              readOnly={emailAuth.isSent || emailAuth.isVerified}
+            >
+              {!emailAuth.isVerified ? (
+                <button
+                  type="button"
+                  onClick={handleSendEmail}
+                  disabled={status.isEmailSending}
+                  className="px-4 py-2.5 bg-neon-500/10 text-neon-500 border border-neon-500/30 rounded-xl text-sm font-bold hover:bg-neon-500/20 transition-colors whitespace-nowrap disabled:opacity-50"
+                >
+                  {status.isEmailSending ? "발송 중..." : emailAuth.isSent ? "재발송" : "인증 요청"}
+                </button>
+              ) : (
+                <div className="flex items-center gap-1.5 px-3 py-2 bg-green-500/10 text-green-400 border border-green-500/30 rounded-xl text-xs font-bold">
+                  <CheckCircle2 size={14} /> 인증됨
+                </div>
+              )}
+            </AuthInput>
+
+            {emailAuth.isSent && !emailAuth.isVerified && (
+              <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                <AuthInput
+                  label="인증번호"
+                  icon={ShieldCheck}
+                  name="verificationCode"
+                  type="text"
+                  maxLength={6}
+                  placeholder="인증번호 6자리"
+                  value={formData.verificationCode}
+                  onChange={handleChange}
+                >
+                  <button
+                    type="button"
+                    onClick={handleVerifyCode}
+                    disabled={status.isCodeVerifying}
+                    className="px-4 py-2.5 bg-zinc-800 text-white rounded-xl text-sm font-bold hover:bg-zinc-700 border border-zinc-700 transition-colors whitespace-nowrap disabled:opacity-50"
+                  >
+                    {status.isCodeVerifying ? "확인 중..." : "번호 확인"}
+                  </button>
+                </AuthInput>
+              </div>
+            )}
 
             <AuthInput
               label="휴대폰 번호"
@@ -53,9 +147,8 @@ export default function Signup() {
               type="tel"
               required
               placeholder="010-1234-5678"
-              value={form.data.phone}
-              onChange={form.handleChange}
-              error={form.errors.phone}
+              value={formData.phone}
+              onChange={handleChange}
             />
           </div>
 
@@ -68,10 +161,8 @@ export default function Signup() {
                 type="password"
                 required
                 placeholder="영문, 숫자, 특수문자 포함 8자 이상"
-                value={form.data.password}
-                onChange={form.handleChange}
-                error={form.errors.password}
-                success={form.success.password}
+                value={formData.password}
+                onChange={handleChange}
               />
               <AuthInput
                 label="비밀번호 확인"
@@ -80,11 +171,10 @@ export default function Signup() {
                 type="password"
                 required
                 placeholder="재입력"
-                value={form.data.confirmPassword}
-                onChange={form.handleChange}
-                error={form.errors.confirmPassword}
+                value={formData.confirmPassword}
+                onChange={handleChange}
                 success={
-                  form.data.password && form.data.confirmPassword && form.data.password === form.data.confirmPassword
+                  formData.password && formData.confirmPassword && formData.password === formData.confirmPassword
                     ? "비밀번호가 일치합니다"
                     : undefined
                 }
@@ -100,9 +190,8 @@ export default function Signup() {
               type="text"
               required
               placeholder="이름을 입력해주세요"
-              value={form.data.ownerName}
-              onChange={form.handleChange}
-              error={form.errors.ownerName}
+              value={formData.ownerName}
+              onChange={handleChange}
             />
           </div>
 
