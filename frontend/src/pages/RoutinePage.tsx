@@ -3,7 +3,7 @@ import { useRoutines, type Routine, type Exercise } from '../context/RoutineCont
 import { Timer, Play, Pause, RotateCcw, Plus, Edit2, Trash2, X, Check, Dumbbell } from 'lucide-react';
 
 const RoutinePage: FC = () => {
-  const { routines, deleteRoutine, addRoutine, updateRoutine } = useRoutines();
+  const { routines, deleteRoutine, addRoutine, updateRoutine, isLoading } = useRoutines();
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
   const [timer, setTimer] = useState<number>(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -21,6 +21,14 @@ const RoutinePage: FC = () => {
     const rs = s % 60;
     return `${m}:${rs.toString().padStart(2, '0')}`;
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-neon-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 w-full max-w-6xl mx-auto px-4 py-12">
@@ -69,8 +77,12 @@ const RoutinePage: FC = () => {
         </div>
         <button 
           onClick={() => {
-            const nr = { id: Date.now().toString(), title: "새 루틴", exercises: [], createdAt: new Date().toISOString() };
-            addRoutine(nr);
+            const nr = { 
+              id: 'new-' + Date.now(), 
+              title: "", 
+              exercises: [], 
+              createdAt: new Date().toISOString() 
+            };
             setEditingRoutine(nr);
           }} 
           className="flex items-center gap-2 bg-neon-400 text-black px-6 py-3 rounded-xl font-bold hover:bg-neon-500 transition-colors"
@@ -102,7 +114,11 @@ const RoutinePage: FC = () => {
                     <Edit2 size={16} />
                   </button>
                   <button 
-                    onClick={() => deleteRoutine(routine.id)} 
+                    onClick={async () => {
+                      if(confirm('정말 삭제하시겠습니까?')) {
+                        await deleteRoutine(routine.id);
+                      }
+                    }} 
                     className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
                   >
                     <Trash2 size={16} />
@@ -126,12 +142,14 @@ const RoutinePage: FC = () => {
         )}
       </div>
 
-      {/* Edit Modal */}
+      {/* Edit/Create Modal */}
       {editingRoutine && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-zinc-900 border border-zinc-800 w-full max-w-xl rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 duration-300">
             <div className="flex justify-between items-center mb-8">
-              <h3 className="text-2xl font-bold">루틴 정보 수정</h3>
+              <h3 className="text-2xl font-bold">
+                {editingRoutine.id.startsWith('new-') ? '새 루틴 생성' : '루틴 정보 수정'}
+              </h3>
               <button onClick={() => setEditingRoutine(null)} className="text-zinc-500 hover:text-white transition-colors">
                 <X size={24} />
               </button>
@@ -213,7 +231,14 @@ const RoutinePage: FC = () => {
               
               <div className="flex gap-3 pt-4">
                 <button 
-                  onClick={() => { updateRoutine(editingRoutine.id, editingRoutine); setEditingRoutine(null); }} 
+                  onClick={async () => { 
+                    if (editingRoutine.id.startsWith('new-')) {
+                      await addRoutine(editingRoutine);
+                    } else {
+                      await updateRoutine(editingRoutine.id, editingRoutine);
+                    }
+                    setEditingRoutine(null); 
+                  }} 
                   className="flex-1 bg-neon-400 text-black py-4 rounded-xl font-bold text-lg hover:bg-neon-500 transition-colors flex items-center justify-center gap-2"
                 >
                   <Check size={20} /> 저장 완료
