@@ -1,9 +1,7 @@
 import { useState, type FC } from 'react';
-import axios from 'axios';
+import api from '@/lib/apiClient';
 import { useRoutines, type Routine } from '../context/RoutineContext';
 import { Sparkles, Save, Dumbbell, Target, Gauge } from 'lucide-react';
-
-const API_KEY = import.meta.env.VITE_GROQ_API_KEY || '';
 
 const RecommendationPage: FC = () => {
   const { addRoutine } = useRoutines();
@@ -17,34 +15,33 @@ const RecommendationPage: FC = () => {
 
   const fetchRecommendation = async () => {
     setLoading(true);
-    const prompt = `운동 목표: ${form.goal}, 수준: ${form.level}, 장비: ${form.equipment}. 
-    이 조건에 맞는 운동 루틴 1개를 JSON 형식으로 추천해줘. 
-    반드시 모든 필드(운동명 포함)는 한국어로 작성해. 일본어나 영어는 사용하지 마.
-    형식: { "title": "루틴이름", "exercises": [ { "name": "운동명", "sets": 3, "reps": 12, "rest": 60, "target": "타겟부위" } ] }
-    JSON 데이터만 출력해.`;
-
     try {
-      const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
-        model: "llama-3.3-70b-versatile",
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" }
-      }, {
-        headers: { 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' }
+      const response = await api.get('/routines/recommend', {
+        params: {
+          goal: form.goal,
+          level: form.level,
+          equipmentType: form.equipment
+        }
       });
 
-      const content = JSON.parse(response.data.choices[0].message.content);
+      const data = response.data;
       const newRoutine: Routine = {
         id: Date.now().toString(),
-        title: content.title || "AI 추천 루틴",
-        exercises: content.exercises.map((ex: any, idx: number) => ({
+        title: data.routineName || "AI 추천 루틴",
+        exercises: (data.exercises || []).map((ex: any, idx: number) => ({
           id: `${Date.now()}-${idx}`,
-          name: ex.name, sets: ex.sets, reps: ex.reps, rest: ex.rest, target: ex.target
+          name: ex.name, 
+          sets: ex.sets, 
+          reps: ex.reps, 
+          rest: 60, // 기본 휴식 시간
+          target: ex.targetPart || '전신'
         })),
         createdAt: new Date().toISOString()
       };
       setRecommendation(newRoutine);
     } catch (error: any) {
-      alert(`오류: ${error.message}`);
+      console.error('Recommendation error:', error);
+      alert(`추천을 가져오는데 실패했습니다: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -137,7 +134,15 @@ const RecommendationPage: FC = () => {
               <p className="text-zinc-500 text-sm">AI가 생성한 최적의 루틴입니다.</p>
             </div>
             <button 
-              onClick={() => { addRoutine(recommendation); alert('나의 루틴에 저장되었습니다!'); setRecommendation(null); }} 
+              onClick={async () => { 
+                try {
+                  await addRoutine(recommendation); 
+                  alert('나의 루틴에 저장되었습니다!'); 
+                  setRecommendation(null); 
+                } catch (err) {
+                  alert('루틴 저장에 실패했습니다.');
+                }
+              }} 
               className="flex items-center gap-2 bg-zinc-800 text-white px-6 py-3 rounded-xl font-bold hover:bg-zinc-700 transition-colors"
             >
               <Save size={18} /> 내 루틴으로 저장
