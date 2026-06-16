@@ -38,6 +38,9 @@ public class SecurityConfig {
                         // 식품 검색 API 허용
                         .requestMatchers("/api/foods/**").permitAll()
 
+                        .requestMatchers("/api/community/**").permitAll()
+                        .requestMatchers("/api/routines/**").permitAll()
+
                         // 그 외의 모든 요청은 JWT 인증 필요
                         .anyRequest().authenticated()
                 )
