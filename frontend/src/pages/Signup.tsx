@@ -1,61 +1,12 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import { User, Mail, Phone, Lock, UserCircle, ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
+import { User, Lock, UserCircle, ArrowRight, CheckCircle2, ShieldQuestion, KeyRound, Mail } from "lucide-react";
 
 import AuthInput from "@/components/ui/AuthInput";
 import AuthButton from "@/components/ui/AuthButton";
+import { useSignupForm } from "@/hooks/useSignupForm";
 
 export default function Signup() {
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    verificationCode: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-    ownerName: ""
-  });
-  const [status, setStatus] = useState({
-    isIdChecking: false,
-    isEmailSending: false,
-    isCodeVerifying: false,
-    isLoading: false
-  });
-  const [emailAuth, setEmailAuth] = useState({
-    isSent: false,
-    isVerified: false
-  });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleCheckId = () => {
-    setStatus({ ...status, isIdChecking: true });
-    setTimeout(() => setStatus({ ...status, isIdChecking: false }), 1000);
-  };
-
-  const handleSendEmail = () => {
-    setStatus({ ...status, isEmailSending: true });
-    setTimeout(() => {
-      setStatus({ ...status, isEmailSending: false });
-      setEmailAuth({ ...emailAuth, isSent: true });
-    }, 1000);
-  };
-
-  const handleVerifyCode = () => {
-    setStatus({ ...status, isCodeVerifying: true });
-    setTimeout(() => {
-      setStatus({ ...status, isCodeVerifying: false });
-      setEmailAuth({ ...emailAuth, isVerified: true });
-    }, 1000);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus({ ...status, isLoading: true });
-    setTimeout(() => setStatus({ ...status, isLoading: false }), 1500);
-  };
+  const { form, status, actions } = useSignupForm();
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4">
@@ -63,31 +14,40 @@ export default function Signup() {
         <div className="text-center mb-8">
           <h2 className="text-3xl font-extrabold text-white tracking-tight">회원가입</h2>
           <p className="mt-2 text-sm text-zinc-400 font-medium">
-            이메일 인증을 통해 체계적인 피트니스 관리를 시작하세요.
+            체계적인 피트니스 관리를 시작하세요.
           </p>
         </div>
 
-        <form className="space-y-6" onSubmit={handleSubmit}>
+        <form className="space-y-6" onSubmit={form.handleSubmit}>
           <div className="space-y-4">
-            <AuthInput
-              label="아이디"
-              icon={User}
-              name="username"
-              type="text"
-              required
-              placeholder="아이디 입력"
-              value={formData.username}
-              onChange={handleChange}
-            >
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <AuthInput
+                  label="아이디"
+                  icon={User}
+                  name="username"
+                  type="text"
+                  required
+                  placeholder="아이디 입력"
+                  value={form.data.username}
+                  onChange={form.handleChange}
+                  error={form.errors.username}
+                  success={form.success.username}
+                />
+              </div>
               <button
                 type="button"
-                onClick={handleCheckId}
-                disabled={status.isIdChecking}
-                className="px-4 py-2.5 bg-neon-500/10 text-neon-500 border border-neon-500/30 rounded-xl text-sm font-bold hover:bg-neon-500/20 transition-colors whitespace-nowrap disabled:opacity-50"
+                onClick={actions.checkIdDuplicate}
+                disabled={status.isIdChecking || !form.data.username}
+                className={`h-[52px] px-4 rounded-xl text-sm font-bold transition-all whitespace-nowrap mb-[2px] ${
+                  status.isIdChecking || !form.data.username
+                    ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                    : "bg-zinc-800 text-white hover:bg-zinc-700 active:scale-95"
+                }`}
               >
                 {status.isIdChecking ? "확인 중..." : "중복확인"}
               </button>
-            </AuthInput>
+            </div>
 
             <AuthInput
               label="이메일"
@@ -96,59 +56,22 @@ export default function Signup() {
               type="email"
               required
               placeholder="example@mail.com"
-              value={formData.email}
-              onChange={handleChange}
-              readOnly={emailAuth.isSent || emailAuth.isVerified}
-            >
-              {!emailAuth.isVerified ? (
-                <button
-                  type="button"
-                  onClick={handleSendEmail}
-                  disabled={status.isEmailSending}
-                  className="px-4 py-2.5 bg-neon-500/10 text-neon-500 border border-neon-500/30 rounded-xl text-sm font-bold hover:bg-neon-500/20 transition-colors whitespace-nowrap disabled:opacity-50"
-                >
-                  {status.isEmailSending ? "발송 중..." : emailAuth.isSent ? "재발송" : "인증 요청"}
-                </button>
-              ) : (
-                <div className="flex items-center gap-1.5 px-3 py-2 bg-green-500/10 text-green-400 border border-green-500/30 rounded-xl text-xs font-bold">
-                  <CheckCircle2 size={14} /> 인증됨
-                </div>
-              )}
-            </AuthInput>
-
-            {emailAuth.isSent && !emailAuth.isVerified && (
-              <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                <AuthInput
-                  label="인증번호"
-                  icon={ShieldCheck}
-                  name="verificationCode"
-                  type="text"
-                  maxLength={6}
-                  placeholder="인증번호 6자리"
-                  value={formData.verificationCode}
-                  onChange={handleChange}
-                >
-                  <button
-                    type="button"
-                    onClick={handleVerifyCode}
-                    disabled={status.isCodeVerifying}
-                    className="px-4 py-2.5 bg-zinc-800 text-white rounded-xl text-sm font-bold hover:bg-zinc-700 border border-zinc-700 transition-colors whitespace-nowrap disabled:opacity-50"
-                  >
-                    {status.isCodeVerifying ? "확인 중..." : "번호 확인"}
-                  </button>
-                </AuthInput>
-              </div>
-            )}
+              value={form.data.email}
+              onChange={form.handleChange}
+              error={form.errors.email}
+              success={form.success.email}
+            />
 
             <AuthInput
-              label="휴대폰 번호"
-              icon={Phone}
-              name="phone"
-              type="tel"
+              label="이름"
+              icon={UserCircle}
+              name="ownerName"
+              type="text"
               required
-              placeholder="010-1234-5678"
-              value={formData.phone}
-              onChange={handleChange}
+              placeholder="이름을 입력해주세요"
+              value={form.data.ownerName}
+              onChange={form.handleChange}
+              error={form.errors.ownerName}
             />
           </div>
 
@@ -161,8 +84,10 @@ export default function Signup() {
                 type="password"
                 required
                 placeholder="영문, 숫자, 특수문자 포함 8자 이상"
-                value={formData.password}
-                onChange={handleChange}
+                value={form.data.password}
+                onChange={form.handleChange}
+                error={form.errors.password}
+                success={form.success.password}
               />
               <AuthInput
                 label="비밀번호 확인"
@@ -171,10 +96,11 @@ export default function Signup() {
                 type="password"
                 required
                 placeholder="재입력"
-                value={formData.confirmPassword}
-                onChange={handleChange}
+                value={form.data.confirmPassword}
+                onChange={form.handleChange}
+                error={form.errors.confirmPassword}
                 success={
-                  formData.password && formData.confirmPassword && formData.password === formData.confirmPassword
+                  form.data.password && form.data.confirmPassword && form.data.password === form.data.confirmPassword
                     ? "비밀번호가 일치합니다"
                     : undefined
                 }
@@ -182,16 +108,44 @@ export default function Signup() {
             </div>
           </div>
 
-          <div className="space-y-4 pt-4">
+          {/* Security Question Section */}
+          <div className="space-y-4 pt-4 border-t border-zinc-800/50 mt-4">
+            <div className="space-y-2">
+              <label className="block text-sm font-bold text-zinc-300">
+                아이디/비밀번호 찾기 질문
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <ShieldQuestion className="h-5 w-5 text-zinc-500" />
+                </div>
+                <select
+                  name="securityQuestionId"
+                  value={form.data.securityQuestionId}
+                  onChange={form.handleChange}
+                  className="w-full bg-black border border-zinc-800 rounded-xl py-3.5 pl-11 pr-4 text-sm font-medium outline-none focus:border-neon-500 transition-all text-white appearance-none"
+                >
+                  <option value="1">출신 초등학교는 어디인가요?</option>
+                  <option value="2">태어난 동네는 어디인가요?</option>
+                  <option value="3">가장 좋아하는 동물은 무엇인가요?</option>
+                  <option value="4">반려동물의 이름은 무엇인가요?</option>
+                  <option value="5">나의 어릴 적 별명은 무엇인가요?</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-zinc-500 text-xs">
+                  ▼
+                </div>
+              </div>
+            </div>
+
             <AuthInput
-              label="이름"
-              icon={UserCircle}
-              name="ownerName"
+              label="질문 답변"
+              icon={KeyRound}
+              name="securityAnswer"
               type="text"
               required
-              placeholder="이름을 입력해주세요"
-              value={formData.ownerName}
-              onChange={handleChange}
+              placeholder="답변을 입력해주세요"
+              value={form.data.securityAnswer}
+              onChange={form.handleChange}
+              error={form.errors.securityAnswer}
             />
           </div>
 
